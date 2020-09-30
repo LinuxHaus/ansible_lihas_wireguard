@@ -1,0 +1,62 @@
+---
+- name: reset_apt_update
+  set_fact:
+    apt_update: False
+  when: apt_update is not defined
+# repositories
+- name: create /etc/apt/preferences.d
+  file:
+    state: directory
+    path: /etc/apt/preferences.d
+- name: enable buster-backports
+  copy:
+    src: "{{ item }}"
+    dest: "/{{ item }}"
+  register: result
+  loop:
+    - etc/apt/sources.list.d/buster-backports.list
+    - etc/apt/preferences.d/wireguard.pref
+- name: set_apt_update
+  set_fact:
+    apt_update: True
+  when: result.changed == True
+- name: set_apt_update
+  set_fact:
+    apt_update: True
+  when: result.changed == True
+- name: apt update
+  apt:
+    update_cache: True
+  when: apt_update == True
+- name: reset_apt_update
+  set_fact:
+    apt_update: False
+  when: apt_update == True
+- name: install software
+  apt:
+    name: "{{ item }}"
+    state: present
+    install_recommends: False
+  loop:
+    - wireguard-tools
+  loop_control:
+    loop_var: item
+- name: install software if not lxc
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - wireguard-dkms
+  loop_control:
+    loop_var: item
+  when: ansible_virtualization_type != 'lxc'
+- name: create wireguard key if none exists so far
+  block:
+    - file:
+        path: /etc/wireguard/wg-private.key
+        state: file
+        mode: 600
+  rescue:
+    - shell:
+        cmd: "wg genkey | tee /etc/wireguard/wg-private.key | wg pubkey > /etc/wireguard/wg-public.key"
+
