@@ -41,15 +41,6 @@
     - wireguard-tools
   loop_control:
     loop_var: item
-- name: install software if not lxc
-  apt:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - wireguard-dkms
-  loop_control:
-    loop_var: item
-  when: ansible_virtualization_type != 'lxc'
 - name: create wireguard key if none exists so far
   block:
     - file:
