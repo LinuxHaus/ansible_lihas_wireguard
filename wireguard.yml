@@ -1,5 +1,6 @@
 ---
-- hosts: '*'
+- name: Run wireguard
+  hosts: '*'
   roles:
     - lihas_wireguard
 ...

@@ -1,53 +1,55 @@
 ---
-- name: reset_apt_update
-  set_fact:
-    apt_update: False
+- name: Initialize reset_apt_update
+  ansible.builtin.set_fact:
+    apt_update: false
   when: apt_update is not defined
 # repositories
-- name: create /etc/apt/preferences.d
-  file:
+- name: Create /etc/apt/preferences.d
+  ansible.builtin.file:
     state: directory
     path: /etc/apt/preferences.d
-- name: enable buster-backports
-  copy:
+    mode: "0755"
+- name: Enable buster-backports
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/{{ item }}"
+    mode: "0444"
   register: result
   loop:
     - etc/apt/sources.list.d/buster-backports.list
     - etc/apt/preferences.d/wireguard.pref
-- name: set_apt_update
-  set_fact:
-    apt_update: True
-  when: result.changed == True
-- name: set_apt_update
-  set_fact:
-    apt_update: True
-  when: result.changed == True
-- name: apt update
-  apt:
-    update_cache: True
-  when: apt_update == True
-- name: reset_apt_update
-  set_fact:
-    apt_update: False
-  when: apt_update == True
-- name: install software
-  apt:
+  when: ansible_distribution_release == "buster"
+- name: Set set_apt_update
+  ansible.builtin.set_fact:
+    apt_update: true
+  when: ansible_distribution_release == "buster" and result.changed
+- name: Run apt update
+  ansible.builtin.apt:
+    update_cache: true
+  when: apt_update
+- name: Reset reset_apt_update
+  ansible.builtin.set_fact:
+    apt_update: false
+  when: apt_update
+- name: Install software
+  ansible.builtin.apt:
     name: "{{ item }}"
     state: present
-    install_recommends: False
+    install_recommends: false
   loop:
     - wireguard-tools
   loop_control:
     loop_var: item
-- name: create wireguard key if none exists so far
+- name: Create wireguard key if none exists so far
   block:
-    - file:
+    - name: Check wg-private
+      ansible.builtin.file:
         path: /etc/wireguard/wg-private.key
         state: file
-        mode: 600
+        mode: "0600"
   rescue:
-    - shell:
+    - name: Create wg-private
+      ansible.builtin.shell:
         cmd: "wg genkey | tee /etc/wireguard/wg-private.key | wg pubkey > /etc/wireguard/wg-public.key"
-
+      changed_when: true
+...

@@ -1,15 +1,16 @@
 galaxy_info:
   author: Adrian Reyer <lihas@lihas.de>
+  namespace: lihas
   description: Install wireguard on Debian systems
   license: GPL-3.0-or-later
   company: LiHAS - LinuxHaus Stuttgart, Adrian Reyer
 
-  min_ansible_version: 2.9
+  min_ansible_version: "2.9"
 
   platforms:
     - name: Debian
       versions:
-      - all
+        - all
   galaxy_tags: []
 
 dependencies: []
